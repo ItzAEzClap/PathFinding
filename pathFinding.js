@@ -1,6 +1,15 @@
-async function findShortestPath(grid, startNode, targetNode) {
+
+async function findShortestPat(grid, startX, startY, endX, endY) {
     let open = []
     let closed = new Set()
+}
+
+async function findShortestPath(grid, startX, startY, targetX, targetY) {
+    let open = []
+    let closed = new Set()
+    let startNode = grid.getNode(startX, startY)
+    let targetNode = grid.getNode(targetX, targetY)
+
     startNode.gCost = 0
     open.push(startNode)
 
@@ -57,8 +66,8 @@ function getNeighbours(grid, node) {
             if (y === 0 && x === 0) { continue }
             let cX = node.x + x
             let cY = node.y + y
-            if (cY >= 0 && cY < grid.length && cX >= 0 && cX < grid[cY].length) {
-                neighbours.push(grid[cY][cX])
+            if (cY >= 0 && cY < grid.height && cX >= 0 && cX < grid.width) {
+                neighbours.push(grid.getNode(cX, cY))
             }
         }
     }
@@ -68,8 +77,11 @@ function getNeighbours(grid, node) {
 function getDistance(nodeA, nodeB) {
     let dX = Math.abs(nodeA.x - nodeB.x)
     let dY = Math.abs(nodeA.y - nodeB.y)
+
+    const F = Math.SQRT2 - 1
     if (dX > dY) {
-        return 14 * dY + 10 * (dX - dY)
+        return F * dY + dX
     }
-    return 14 * dX + 10 * (dY - dX)
+
+    return F * dX + dY
 }

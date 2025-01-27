@@ -6,7 +6,6 @@ class Node {
         this.parent
         this.x = x
         this.y = y
-        this.follow = false
     }
 
     get fCost() {

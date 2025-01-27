@@ -9,47 +9,90 @@ dimW = canvas.width / width
 const height = Math.ceil(canvas.height / dimW)
 let dimH = canvas.height / height
 
-let grid = createGrid(width, height)
-let startNode = grid[0][0]
-let targetNode = grid[height - 1][width - 1]
+let grid = new Grid(width, height)
+let startNode = grid.getNode(0, 0)
+let targetNode = grid.getNode(width - 1, height - 1)
 
-function createGrid(width, height) {
-    let grid = []
-    for (let i = 0; i < height; i++) {
-        grid.push([])
-        for (let j = 0; j < width; j++) {
-            grid[i].push(new Node(j, i, true))
-        }
-    }
-    return grid
-}
-
-function draw(grid) {
-    for (let y = 0; y < grid.length; y++) {
-        for (let x = 0; x < grid[y].length; x++) {
+async function animate() {
+    // Draw grid
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            let node = grid.getNode(x, y)
             c.beginPath()
-            c.fillStyle = grid[y][x].walkable ? 'lightgreen' : 'red'
-            if (grid[y][x] === startNode) { c.fillStyle = 'green' }
-            if (grid[y][x] === targetNode) { c.fillStyle = 'blue' }
+            c.fillStyle = node.walkable ? 'lightgreen' : 'red'
+            if (node === startNode) { c.fillStyle = 'green' }
+            if (node === targetNode) { c.fillStyle = 'blue' }
             c.fillRect(dimW * x, dimH * y, dimW, dimH)
         }
     }
-}
 
-async function animate() {
-    draw(grid)
 
-    c.fillStyle = 'black'
-    for (let node of await findShortestPath(grid, startNode, targetNode)) {
-        c.fillRect(node.x * dimW, node.y * dimH, dimW, dimH)
+    try {
+        c.fillStyle = 'black'
+        for (let node of await findShortestPath(grid, startNode.x, startNode.y, targetNode.x, targetNode.y)) {
+            c.fillRect(node.x * dimW, node.y * dimH, dimW, dimH)
+        }
+    } catch {
+        console.log("OOPS")
     }
 
-    await new Promise(resolve => setTimeout(resolve, 10))
+    console.log(following)
+
+    await new Promise(resolve => setTimeout(resolve, 16))
     requestAnimationFrame(animate)
 }
 
+window.addEventListener("mousemove", (e) => {
+    let x = Math.floor(e.clientX / dimW)
+    let y = Math.floor(e.clientY / dimH)
 
+    if (y < 0 || y >= height || x < 0 || x >= width) {
+        return
+    }
+
+    let node = grid.getNode(x, y)
+
+    if (following == startNode) {
+        startNode = node
+        following = node
+    } else if (following == targetNode) {
+        targetNode = node
+        following = node
+    } else if (down) {
+        node.walkable = mode
+    }
+})
+
+window.addEventListener("mousedown", (e) => {
+    let x = Math.floor(e.clientX / dimW)
+    let y = Math.floor(e.clientY / dimH)
+
+    if (y < 0 || y >= height || x < 0 || x >= width) {
+        return
+    }
+
+    down = true
+    let node = grid.getNode(x, y)
+
+    if (node == startNode || node == targetNode) {
+        following = node
+    } else {
+        node.walkable = !node.walkable
+        mode = node.walkable
+    }
+    
+})
+
+window.addEventListener("mouseup", (e) => {
+    down = false
+    mode = null
+    following = null
+})
+
+let mode = null
+let following = null
 let down = false
+/*
 let changed = [startNode, targetNode]
 
 window.addEventListener('mousemove', (e) => {
@@ -57,23 +100,25 @@ window.addEventListener('mousemove', (e) => {
     let x = Math.floor(e.clientX / dimW)
     if (y < 0 || y >= height || x < 0 || x >= width) { return }
 
-    if (grid[y][x].walkable) {
-        if (startNode.follow && grid[y][x] !== targetNode ||
-            targetNode.follow && grid[y][x] !== startNode) {
-                grid[y][x].follow = false
+    let node = grid.getNode(x, y)
 
-                if (startNode.follow) { startNode = grid[y][x]; startNode.parent = undefined }
-                if (targetNode.follow) { targetNode = grid[y][x] }
+    if (node.walkable) {
+        if (startNode.follow && node !== targetNode ||
+            targetNode.follow && node !== startNode) {
+                node.follow = false
 
-                grid[y][x].follow = true
+                if (startNode.follow) { startNode = node; startNode.parent = undefined }
+                if (targetNode.follow) { targetNode = node }
+
+                node.follow = true
                 return
             }
     }
 
-    if (!down || changed.includes(grid[y][x])) { return }
+    if (!down || changed.includes(node)) { return }
 
-    grid[y][x].walkable = !grid[y][x].walkable
-    changed.push(grid[y][x])
+    node.walkable = !node.walkable
+    changed.push(node)
 })
 
 window.addEventListener('mousedown', (e) => {
@@ -81,16 +126,18 @@ window.addEventListener('mousedown', (e) => {
     let x = Math.floor(e.clientX / dimW)
 
     if (y < 0 || y >= height || x < 0 || x >= width) { return }
-    if (grid[y][x] === startNode || grid[y][x] === targetNode) { grid[y][x].follow = true; return }
+
+    let node = grid.getNode(x, y)
+    if (node === startNode || node === targetNode) { node.follow = true; return }
 
     down = true
-    grid[y][x].walkable = !grid[y][x].walkable
-    changed.push(grid[y][x])
+    node.walkable = !node.walkable
+    changed.push(node)
 })
 
 window.addEventListener('mouseup', () => {
     changed = [startNode, targetNode]
     down = startNode.follow = targetNode.follow = false
-})
+})*/
 
 animate()
